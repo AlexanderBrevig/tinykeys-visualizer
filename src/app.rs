@@ -66,12 +66,6 @@ impl eframe::App for TemplateApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self {
-            label,
-            keys,
-            current_key,
-        } = self;
-
         let mut layout = HashMap::new();
         //
         layout.insert(egui::Key::Space, ("SPC".to_string(), vec![7]));
@@ -79,8 +73,7 @@ impl eframe::App for TemplateApp {
         layout.insert(egui::Key::Backspace, ("BSPC".to_string(), vec![4]));
         layout.insert(egui::Key::Tab, ("TAB".to_string(), vec![5]));
         layout.insert(egui::Key::Escape, ("ESC".to_string(), vec![5, 6]));
-        /// No mod layer
-        //
+        // No mod layer
         layout.insert(egui::Key::Num1, ("1".to_string(), vec![0, 1, 11]));
         layout.insert(egui::Key::Num2, ("2".to_string(), vec![0, 1, 2, 11]));
         layout.insert(egui::Key::Num3, ("3".to_string(), vec![0, 2, 11]));
@@ -132,7 +125,6 @@ impl eframe::App for TemplateApp {
             }
 
             ui.heading("eframe template");
-            let desired_size = ui.spacing().interact_size.y * egui::vec2(0.0, 5.0);
             let desired_size = ui.available_size() * egui::vec2(0.1, 0.2);
             let (rect, mut _response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
             ui.painter().text(

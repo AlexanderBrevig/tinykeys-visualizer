@@ -21,7 +21,7 @@ pub const MAX_KEYS: usize = 12;
 #[allow(dead_code)]
 fn toggle_ui(ui: &mut egui::Ui, on: &mut Key) -> egui::Response {
     let desired_size = ui.spacing().interact_size.y * egui::vec2(5.0, 5.0);
-    let (rect, mut response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
+    let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
     // if response.clicked() {
     //     *on = !*on.state;
     //     response.mark_changed();
@@ -31,7 +31,7 @@ fn toggle_ui(ui: &mut egui::Ui, on: &mut Key) -> egui::Response {
     });
 
     if ui.is_rect_visible(rect) {
-        let how_on = ui.ctx().animate_bool(response.id, on.state);
+        // let how_on = ui.ctx().animate_bool(response.id, on.state);
         let visuals = ui.style().interact_selectable(&response, on.state);
         let rect = rect.expand(visuals.expansion);
         let radius = 0.5 * rect.height();
@@ -47,10 +47,6 @@ fn toggle_ui(ui: &mut egui::Ui, on: &mut Key) -> egui::Response {
             },
             Color32::WHITE,
         );
-        // let circle_x = egui::lerp((rect.left() + radius)..=(rect.right() - radius), how_on);
-        // let center = egui::pos2(circle_x, rect.center().y);
-        // ui.painter()
-        //     .circle(center, 0.75 * radius, visuals.bg_fill, visuals.fg_stroke);
     }
 
     response
