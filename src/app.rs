@@ -1,3 +1,9 @@
+use std::collections::HashMap;
+
+use egui::{Align2, Color32};
+
+use crate::key::{toggle, Key, MAX_KEYS};
+
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -5,17 +11,32 @@ pub struct TemplateApp {
     // Example stuff:
     label: String,
 
-    // this how you opt-out of serialization of a member
     #[serde(skip)]
-    value: f32,
+    keys: [Key; MAX_KEYS],
+    #[serde(skip)]
+    current_key: String,
 }
 
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
             // Example stuff:
-            label: "Hello World!".to_owned(),
-            value: 2.7,
+            label: "tinykeys".to_owned(),
+            current_key: "".into(),
+            keys: [
+                Key::new("▽".into()),
+                Key::new("◀".into()),
+                Key::new("◆".into()),
+                Key::new("▶".into()),
+                Key::new("⋐".into()),
+                Key::new("⋑".into()),
+                Key::new("⋑".into()),
+                Key::new("⋐".into()),
+                Key::new("◀".into()),
+                Key::new("◆".into()),
+                Key::new("▶".into()),
+                Key::new("△".into()),
+            ],
         }
     }
 }
@@ -45,72 +66,94 @@ impl eframe::App for TemplateApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self { label, value } = self;
+        let Self {
+            label,
+            keys,
+            current_key,
+        } = self;
 
-        // Examples of how to create different panels and windows.
-        // Pick whichever suits you.
-        // Tip: a good default choice is to just keep the `CentralPanel`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+        let mut layout = HashMap::new();
+        //
+        layout.insert(egui::Key::Space, ("SPC".to_string(), vec![7]));
+        layout.insert(egui::Key::Enter, ("RET".to_string(), vec![6]));
+        layout.insert(egui::Key::Backspace, ("BSPC".to_string(), vec![4]));
+        layout.insert(egui::Key::Tab, ("TAB".to_string(), vec![5]));
+        layout.insert(egui::Key::Escape, ("ESC".to_string(), vec![5, 6]));
+        /// No mod layer
+        //
+        layout.insert(egui::Key::Num1, ("1".to_string(), vec![0, 1, 11]));
+        layout.insert(egui::Key::Num2, ("2".to_string(), vec![0, 1, 2, 11]));
+        layout.insert(egui::Key::Num3, ("3".to_string(), vec![0, 2, 11]));
+        layout.insert(egui::Key::Num4, ("4".to_string(), vec![0, 2, 3, 11]));
+        layout.insert(egui::Key::Num5, ("5".to_string(), vec![0, 3, 11]));
+        layout.insert(egui::Key::Num6, ("6".to_string(), vec![0, 7, 11]));
+        layout.insert(egui::Key::Num7, ("7".to_string(), vec![0, 7, 8, 11]));
+        layout.insert(egui::Key::Num8, ("8".to_string(), vec![0, 8, 11]));
+        layout.insert(egui::Key::Num9, ("9".to_string(), vec![0, 8, 9, 11]));
+        layout.insert(egui::Key::Num0, ("0".to_string(), vec![0, 9, 11]));
+        //
+        layout.insert(egui::Key::Q, ("Q".to_string(), vec![11, 1]));
+        layout.insert(egui::Key::W, ("W".to_string(), vec![11, 1, 2]));
+        layout.insert(egui::Key::E, ("E".to_string(), vec![11, 2]));
+        layout.insert(egui::Key::R, ("R".to_string(), vec![11, 2, 3]));
+        layout.insert(egui::Key::T, ("T".to_string(), vec![11, 3]));
+        //
+        layout.insert(egui::Key::A, ("A".to_string(), vec![1]));
+        layout.insert(egui::Key::S, ("S".to_string(), vec![1, 2]));
+        layout.insert(egui::Key::D, ("D".to_string(), vec![2]));
+        layout.insert(egui::Key::F, ("F".to_string(), vec![2, 3]));
+        layout.insert(egui::Key::G, ("G".to_string(), vec![3]));
+        layout.insert(egui::Key::H, ("H".to_string(), vec![7]));
+        layout.insert(egui::Key::J, ("J".to_string(), vec![7, 8]));
+        layout.insert(egui::Key::K, ("K".to_string(), vec![8]));
+        layout.insert(egui::Key::L, ("L".to_string(), vec![8, 9]));
+        //
+        layout.insert(egui::Key::Z, ("Z".to_string(), vec![0, 1]));
+        layout.insert(egui::Key::X, ("X".to_string(), vec![0, 1, 2]));
+        layout.insert(egui::Key::C, ("C".to_string(), vec![0, 2]));
+        layout.insert(egui::Key::V, ("V".to_string(), vec![0, 2, 3]));
+        layout.insert(egui::Key::B, ("B".to_string(), vec![0, 3]));
 
-        #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("Quit").clicked() {
-                        _frame.close();
+        //TODO: reset all states to false
+        egui::CentralPanel::default().show(ctx, |ui| {
+            for (event, (key, ixs)) in layout {
+                if ui.input(|i| i.key_pressed(event)) {
+                    for ix in &ixs {
+                        self.keys[*ix].state = true;
                     }
-                });
-            });
-        });
-
-        egui::SidePanel::left("side_panel").show(ctx, |ui| {
-            ui.heading("Side Panel");
-
-            ui.horizontal(|ui| {
-                ui.label("Write something: ");
-                ui.text_edit_singleline(label);
-            });
-
-            ui.add(egui::Slider::new(value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                *value += 1.0;
+                    self.current_key = key;
+                }
+                if ui.input(|i| i.key_released(event)) {
+                    for ix in &ixs {
+                        self.keys[*ix].state = false;
+                    }
+                    self.current_key = "".to_string();
+                }
             }
 
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 0.0;
-                    ui.label("powered by ");
-                    ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-                    ui.label(" and ");
-                    ui.hyperlink_to(
-                        "eframe",
-                        "https://github.com/emilk/egui/tree/master/crates/eframe",
-                    );
-                    ui.label(".");
-                });
-            });
-        });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
-
             ui.heading("eframe template");
-            ui.hyperlink("https://github.com/emilk/eframe_template");
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/master/",
-                "Source code."
-            ));
+            let desired_size = ui.spacing().interact_size.y * egui::vec2(0.0, 5.0);
+            let desired_size = ui.available_size() * egui::vec2(0.1, 0.2);
+            let (rect, mut _response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
+            ui.painter().text(
+                rect.center(),
+                Align2::CENTER_CENTER,
+                &self.current_key,
+                egui::FontId {
+                    size: 30f32,
+                    family: egui::FontFamily::Monospace,
+                },
+                Color32::WHITE,
+            );
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                for i in 0..MAX_KEYS {
+                    ui.add(toggle(&mut self.keys[i]));
+                    if i == 5 {
+                        ui.separator();
+                    }
+                }
+            });
             egui::warn_if_debug_build(ui);
         });
-
-        if false {
-            egui::Window::new("Window").show(ctx, |ui| {
-                ui.label("Windows can be moved by dragging them.");
-                ui.label("They are automatically sized based on contents.");
-                ui.label("You can turn on resizing and scrolling if you like.");
-                ui.label("You would normally choose either panels OR windows.");
-            });
-        }
     }
 }
